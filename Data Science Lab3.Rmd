@@ -1,0 +1,40 @@
+---
+title: "Data Science Lab 3"
+author: "Amanda Carrico, Hexiuli Huang"
+date: "2023-11-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 1: Write your own k-means clustering function. 
+### Name your function k_means 
+### This function should have three arguments: 
+### - data for the dataset to be clustered 
+### - k for the number of clusters k
+### - iter for the number of iterations performed
+### In your function start by randomly assigning each observation to a cluster and calculate the centroids for each of the cluster 
+### In the loop (loop through for the number of iterations):
+### - calculate the distance from each point to each of the centroids (Hint: I used fields::rdist for this)
+### - calculate the minimum distance for each point to the centroids (Hint: I used an apply statement with which.min)
+### - calculate the new centroids (and then repeat!)
+### Return the cluster assignments for each of the observations in the dataset. Don’t forget to set a seed!
+<br>
+
+## Problem 2: Cluster the iris dataset using your function k_means
+### Hint: Don’t forget to scale the data before you cluster!
+### Try this with 3 clusters and 50 iterations. Use GGally:ggpairs to visualize the four variables colored by your cluster assignment. Create a contingency table of our clustering versus the true labels. Comment on your findings.
+<br>
+
+## Problem 3: Euclidean and Correlation Distance
+### Perform hierarchical clustering using (1) Euclidean distance and (2) correlation distance (Hint: you can use amap::Dist() with method = 'correlation') as the dissimilarity measure and the below linkages, and plot the dendrograms for each linkage:
+### - complete linkage
+### - single linkage
+### - average linkage
+### Determine clusters for 3 groups from all three methods using cutree(). Create six contingency tables for the results. Comment on what you observe.
+<br>
+
+## Problem 4: Comparison
+### Compare the results from k-means clustering and hierarchical clustering. Which method do you think performed better? Why?
