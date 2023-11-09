@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
 ```
 
 ## Problem 1: Write your own k-means clustering function. 
@@ -22,11 +22,73 @@ knitr::opts_chunk$set(echo = TRUE)
 ### - calculate the new centroids (and then repeat!)
 ### Return the cluster assignments for each of the observations in the dataset. Don’t forget to set a seed!
 <br>
+```{r}
+library(tidyverse)
+library(fields)
+set.seed(2234)
+
+k_means <- function(data, k, iter) {
+  ## assign random cluster number to each observation
+  cluster_assignments <- sample(1:k, nrow(data), replace = TRUE)
+  
+  for (i in iter){
+    ## calculate centroids by finding means
+    centroids <- sapply(1:k, function(y) colMeans(data[cluster_assignments == y, ]))
+    
+    ## change the forma in order to find the correct new cluster group
+    centroids <- t(centroids)
+    
+    ## calculate the distance of each datapoint to its centroids
+    distances <- rdist(data, centroids)
+    
+    ## find the minimum distance and assign to new cluster group
+    closest_clusters <- apply(distances, 1, which.min)
+    
+    ## overwrite the cluster number for each observation
+    cluster_assignments <- closest_clusters
+  }
+  return(cluster_assignments)
+}
+```
 
 ## Problem 2: Cluster the iris dataset using your function k_means
 ### Hint: Don’t forget to scale the data before you cluster!
 ### Try this with 3 clusters and 50 iterations. Use GGally:ggpairs to visualize the four variables colored by your cluster assignment. Create a contingency table of our clustering versus the true labels. Comment on your findings.
 <br>
+```{r}
+## prepare dataset
+data("iris")
+scaled_iris <- iris %>%
+  select(-Species) %>%
+  scale()
+```
+
+```{r}
+library(GGally)
+
+## clutser the iris dataset
+cluster_assignments <- k_means(data = scaled_iris, k = 3, iter = 50)
+
+## create new dataset with assigned cluster group
+cluster_assignments <- factor(cluster_assignments)
+iris_cluster <- cbind(iris, cluster_assignments)
+
+## plots
+ggpairs(iris_cluster, columns = 1:4, 
+        aes(color = cluster_assignments, alpha = 0.5))
+
+## recreate the random cluster number list
+set.seed(2234)
+random_labels <- sample(1:3, nrow(iris), replace = TRUE)
+
+## create new dataset with true and random cluster groups
+iris_cluster <- cbind(iris_cluster, random_labels)
+
+## create contingency table
+contin_table <- table(True = iris_cluster$cluster_assignments, Random = random_labels)
+print(contin_table)
+```
+Since we have four categories in iris dataset, the calculation of 4d distance from each point to each of the centroids is very complicated. Thus, we can notice that the points in group 2 and group 3 are mixed together in most of those 2d dot-plots. On the other hand, 31 of 53 observations in the group 1 that were randomly assign under seed 2234 stay in group 1. 22 of 48 observations in the group 1 that were randomly assign under seed 2234 stay in group 2. 12 of 49 observations in the group 1 that were randomly assign under seed 2234 stay in group 2.
 
 ## Problem 3: Euclidean and Correlation Distance
 ### Perform hierarchical clustering using (1) Euclidean distance and (2) correlation distance (Hint: you can use amap::Dist() with method = 'correlation') as the dissimilarity measure and the below linkages, and plot the dendrograms for each linkage:
