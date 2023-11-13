@@ -9,6 +9,15 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
 ```
 
+```{r libraries}
+# load libraries needed for task
+library(tidyverse)
+library(fields)
+library(amap)
+library(knitr)
+library(GGally)
+```
+
 ## Problem 1: Write your own k-means clustering function. 
 ### Name your function k_means 
 ### This function should have three arguments: 
@@ -23,8 +32,6 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
 ### Return the cluster assignments for each of the observations in the dataset. Don’t forget to set a seed!
 <br>
 ```{r}
-library(tidyverse)
-library(fields)
 set.seed(2234)
 
 k_means <- function(data, k, iter) {
@@ -64,8 +71,6 @@ scaled_iris <- iris %>%
 ```
 
 ```{r}
-library(GGally)
-
 ## clutser the iris dataset
 cluster_assignments <- k_means(data = scaled_iris, k = 3, iter = 50)
 
@@ -96,7 +101,127 @@ Since we have four categories in iris dataset, the calculation of 4d distance fr
 ### - single linkage
 ### - average linkage
 ### Determine clusters for 3 groups from all three methods using cutree(). Create six contingency tables for the results. Comment on what you observe.
+```{r 3euclidean}
+# scale to observe
+scaled_iris <- scale(iris[1:4])
+# use euclidean distance and store to cluster later
+iris_eu_dist <- dist(scaled_iris)
+
+# plot complete linkage using hclust, distance stored in iris_eu_dist, and plot function - use complete method
+eu_complete <- hclust(iris_eu_dist, method = 'complete')
+plot(eu_complete, main = "Iris Complete Hierarchical Cluster Dendrogram \n Using Euclidean Distance", hang = -1, cex = .35)
+
+# plot average linkage using hclust, distance stored in iris_eu_dist, and plot function - use average method
+eu_average <- hclust(iris_eu_dist, method = 'average')
+plot(eu_average, main = "Iris Average Hierarchical Cluster Dendrogram \n Using Euclidean Distance", hang = -1, cex = .35)
+
+# plot single linkage using hclust, distance stored in iris_eu_dist, and plot function - use single method
+eu_single <- hclust(iris_eu_dist, method = 'single')
+plot(eu_single, main = "Iris Single Hierarchical Cluster Dendrogram \n Using Euclidean Distance", hang = -1, cex = .35)
+
+# clusters for 3 groups using each method, each stored in own variable to use later
+eu_comp_3 <- cutree(eu_complete, 3)
+eu_avg_3 <- cutree(eu_average, 3)
+eu_sing_3 <- cutree(eu_single, 3)
+```
+
+```{r 3correlation}
+# use correlation distance with amap::dist and store to cluster later
+iris_cor_dist <- amap::Dist(scaled_iris, method = 'correlation')
+
+# plot complete linkage using hclust, distance stored in iris_cor_dist, and plot function - use complete method
+cor_complete <- hclust(iris_cor_dist, method = 'complete')
+plot(cor_complete, main = "Iris Complete Hierarchical Cluster Dendrogram \n Using Correlation Distance", hang = -1, cex = .35, horiz = TRUE)
+
+# plot average linkage using hclust, distance stored in iris_cor_dist, and plot function - use average method
+cor_average <- hclust(iris_cor_dist, method = 'average')
+plot(cor_complete, main = "Iris Average Hierarchical Cluster Dendrogram \n Using Correlation Distance", hang = -1, cex = .35, horiz = TRUE)
+
+# plot single linkage using hclust, distance stored in iris_cor_dist, and plot function - use single method
+cor_single <- hclust(iris_cor_dist, method = 'single')
+plot(cor_single, main = "Iris Single Hierarchical Cluster Dendrogram \n Using Correlation Distance", hang = -1, cex = .35, horiz = TRUE)
+
+# clusters for 3 groups using each method, each stored in own variable to use later
+cor_comp_3 <- cutree(cor_complete, 3)
+cor_avg_3 <- cutree(cor_average, 3)
+cor_sing_3 <- cutree(cor_single, 3)
+```
+
+```{r contingency_tables_eu}
+# store cluster names in a variable to use
+names <- c("Cluster 1", "Cluster 2", "Cluster 3")
+# use table function to get how many observations in each group, store in dataframe to use later
+table_eucomp <- t(as.data.frame(table(eu_comp_3)))[2,]
+# use names function and names stored in names variable to add cluster names to data frame
+names(table_eucomp) <- names
+# create contingency table for Complete Euclidean Clusters using kable function
+t(table_eucomp) %>%
+  kable(caption = "Iris Complete Clusters \n Using Euclidean Distance")
+
+# use same steps as prior to create contingency table for Average Euclidean Clusters
+table_euavg <- t(as.data.frame(table(eu_avg_3)))[2,]
+names(table_euavg) <- names
+t(table_euavg) %>%
+  kable(caption = "Iris Average Clusters \n Using Euclidean Distance")
+
+# same steps as prior to create contingency table for Single Euclidean Clusters
+table_eusing <- t(as.data.frame(table(eu_sing_3)))[2,]
+names(table_eusing) <- names
+t(table_eusing) %>%
+  kable(caption = "Iris Single Clusters \n Using Euclidean Distance")
+```
+
+```{r contingency_tables_cor}
+# create contingency table for Complete Correlation Clusters
+table_corcomp <- t(as.data.frame(table(cor_comp_3)))[2,]
+names(table_corcomp) <- names
+t(table_corcomp) %>%
+  kable(caption = "Iris Complete Clusters \n Using Correlation Distance")
+
+# create contingency table for Average Correlation Clusters
+table_coravg <- t(as.data.frame(table(cor_avg_3)))[2,]
+names(table_coravg) <- names
+t(table_coravg) %>%
+  kable(caption = "Iris Average Clusters \n Using Correlation Distance")
+
+# create contingency table for Single Correlation Clusters
+table_corsing <- t(as.data.frame(table(cor_sing_3)))[2,]
+names(table_corsing) <- names
+t(table_corsing) %>%
+  kable(caption = "Iris Single Clusters \n Using Correlation Distance")
+```
+
+Using Euclidean distance vs Correlation distance to determine clusters for 3 groups will give similar distributions by type of linkage. For complete linkage, Euclidean cluster groups contained one with 49, one with 24, and one with 77 while the Correlation cluster 
+groups had 51, 25, and 74 observations. Similar observations can be seen with Average and Single linkage. In Average linkage, Euclidean groups contained 50, 97, and 3 per group while Correlation had 51, 94, and 5. Single linkage groups for Euclidean distance had 49, 1, and 100 observations in each and for Correlation, it was 51, 98, and 1.
+
 <br>
 
 ## Problem 4: Comparison
 ### Compare the results from k-means clustering and hierarchical clustering. Which method do you think performed better? Why?
+```{r 4}
+# use scatterplot to visualize k-means clusters
+ggDatakmean <- cbind(iris, cluster_assignments)
+ggDatakmean$cluster <- as.factor(ggDatakmean$cluster_assignments)
+print(ggDatakmean)
+ggplot(ggDatakmean, aes(x = Sepal.Length, 
+                                  y = Petal.Length, color=cluster)) + 
+  labs(x = "Sepal Length", y = "Petal Length", title = "K-means clustering visualized for Petal Length and Sepal Length") +
+  geom_point(size=2)
+
+# use scatterplot to visualize complete correlation Hierarchical clusters
+ggDatacomcor <- cbind(iris, cor_comp_3)
+ggDatacomcor$cluster <- as.factor(ggDatacomcor$cor_comp_3)
+ggplot(ggDatacomcor, aes(x = Sepal.Length, 
+                                  y = Petal.Length, color=cluster)) + 
+  labs(x = "Sepal Length", y = "Petal Length", title = "Complete Correlation Hierarchical clustering visualized for Petal Length and Sepal Length") +
+  geom_point(size=2)
+
+# use scatterplot to visualize average correlation clusters
+ggDatacoravg <- cbind(iris, cor_avg_3)
+ggDatacoravg$cluster <- as.factor(ggDatacoravg$cor_avg_3)
+ggplot(ggDatacoravg, aes(x = Sepal.Length, 
+                                  y = Petal.Length, color=cluster)) + 
+  labs(x = "Sepal Length", y = "Petal Length", title = "Average Correlation Hierarchical clustering visualized for Petal Length and Sepal Length") +
+  geom_point(size=2)
+```
+The k-means method to cluster in 3 groups with 50 iterations contained 69 observations in one group, 56 in another, and 25 in the last. These groups are better than any of the Hierarchical methods which makes sense given that k-means clustering is more effective on large data sets.
