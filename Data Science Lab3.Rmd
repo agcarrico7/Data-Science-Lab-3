@@ -2,11 +2,24 @@
 title: "Data Science Lab 3"
 author: "Amanda Carrico, Hexiuli Huang"
 date: "2023-11-08"
-output: html_document
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: 2
+    number_sections: no
+    theme: cerulean
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+  word_document:
+    toc: no
+  pdf_document:
+    toc: no
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+```{r,echo=FALSE}
+knitr::opts_chunk$set(cache=TRUE, echo=TRUE, error=FALSE, message=FALSE, warning=FALSE, tidy.opts=list(width.cutoff=60),tidy=TRUE)
 ```
 
 ```{r libraries}
@@ -42,7 +55,7 @@ k_means <- function(data, k, iter) {
     ## calculate centroids by finding means
     centroids <- sapply(1:k, function(y) colMeans(data[cluster_assignments == y, ]))
     
-    ## change the forma in order to find the correct new cluster group
+    ## change the format in order to find the correct new cluster group
     centroids <- t(centroids)
     
     ## calculate the distance of each datapoint to its centroids
@@ -54,7 +67,7 @@ k_means <- function(data, k, iter) {
     ## overwrite the cluster number for each observation
     cluster_assignments <- closest_clusters
   }
-  return(cluster_assignments)
+  return(list(cluster_assignments,distances))
 }
 ```
 
@@ -72,7 +85,8 @@ scaled_iris <- iris %>%
 
 ```{r}
 ## clutser the iris dataset
-cluster_assignments <- k_means(data = scaled_iris, k = 3, iter = 50)
+clust_func_return <- k_means(data = scaled_iris, k = 3, iter = 50)
+cluster_assignments <- clust_func_return[[1]]
 
 ## create new dataset with assigned cluster group
 cluster_assignments <- factor(cluster_assignments)
@@ -199,29 +213,18 @@ groups had 51, 25, and 74 observations. Similar observations can be seen with Av
 ## Problem 4: Comparison
 ### Compare the results from k-means clustering and hierarchical clustering. Which method do you think performed better? Why?
 ```{r 4}
-# use scatterplot to visualize k-means clusters
-ggDatakmean <- cbind(iris, cluster_assignments)
-ggDatakmean$cluster <- as.factor(ggDatakmean$cluster_assignments)
-print(ggDatakmean)
-ggplot(ggDatakmean, aes(x = Sepal.Length, 
-                                  y = Petal.Length, color=cluster)) + 
-  labs(x = "Sepal Length", y = "Petal Length", title = "K-means clustering visualized for Petal Length and Sepal Length") +
-  geom_point(size=2)
+cat("The within cluster variation for complete correlation hierarchical clustering was", cor_complete$height[147], "\n")
+cat("The within cluster variation for average correlation hierarchical clustering was", cor_average$height[147], "\n")
+cat("The within cluster variation for single correlation hierarchical clustering was", cor_single$height[147], "\n")
 
-# use scatterplot to visualize complete correlation Hierarchical clusters
-ggDatacomcor <- cbind(iris, cor_comp_3)
-ggDatacomcor$cluster <- as.factor(ggDatacomcor$cor_comp_3)
-ggplot(ggDatacomcor, aes(x = Sepal.Length, 
-                                  y = Petal.Length, color=cluster)) + 
-  labs(x = "Sepal Length", y = "Petal Length", title = "Complete Correlation Hierarchical clustering visualized for Petal Length and Sepal Length") +
-  geom_point(size=2)
+cat("The within cluster variation for complete euclidean hierarchical clustering was", eu_complete$height[147], "\n")
+cat("The within cluster variation for average euclidean hierarchical clustering was", eu_average$height[147], "\n")
+cat("The within cluster variation for single euclidean hierarchical clustering was", eu_single$height[147], "\n")
 
-# use scatterplot to visualize average correlation clusters
-ggDatacoravg <- cbind(iris, cor_avg_3)
-ggDatacoravg$cluster <- as.factor(ggDatacoravg$cor_avg_3)
-ggplot(ggDatacoravg, aes(x = Sepal.Length, 
-                                  y = Petal.Length, color=cluster)) + 
-  labs(x = "Sepal Length", y = "Petal Length", title = "Average Correlation Hierarchical clustering visualized for Petal Length and Sepal Length") +
-  geom_point(size=2)
+distances <- clust_func_return[[2]]
+cat("The variances for kmeans clustering: \n")
+cat("The variation in the first cluster was", sum(distances[1]^2)/150, "\n")
+cat("The variation in the second cluster was", sum(distances[2]^2)/150, "\n")
+cat("The variation in the first cluster was", sum(distances[3]^2)/150, "\n")
 ```
-The k-means method to cluster in 3 groups with 50 iterations contained 69 observations in one group, 56 in another, and 25 in the last. These groups are better than any of the Hierarchical methods which makes sense given that k-means clustering is more effective on large data sets.
+The k-means method to cluster in 3 groups with 50 iterations contained 69 observations in one group, 56 in another, and 25 in the last. The groups appear to be more evenly spread out (there isn't one group that only has 1 observation). In addition, the within cluster variation is a sign of effective clustering when it is low. Out of the hierarchical methods, the single correlation hierarchical clustering had the lowest within cluster variation. However, the clustering method with the highest between cluster variation and lowest within cluster variation was in fact k-means in general. The groups created using k-means clustering were better than any of the Hierarchical methods which makes sense given that k-means clustering is more effective on large data sets.
